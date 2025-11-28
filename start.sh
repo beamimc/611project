@@ -6,4 +6,5 @@ docker run --platform linux/amd64 \
   -v $(pwd):/home/rstudio/work \
   -v $HOME/.ssh:/home/rstudio/.ssh \
   -v $HOME/.gitconfig:/home/rstudio/.gitconfig \
+  -w /home/rstudio/work \
   -p 8787:8787 -it project611
