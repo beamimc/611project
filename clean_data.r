@@ -1,67 +1,74 @@
 library(tidyverse)
 library(dplyr)
 library(skimr)
+library(ggplot2)
+library(patchwork)
+
+# Which authors are most successful: who is most prolific, who has the highest average ratings or popularity, and do top authors specialize by cuisine, ingredient, or recipe length?
+# Is there a relationship between prep/cook time and average rating?
+# Which recipe categories or cuisines tend to have the highest average ratings and review counts?
+# Which recipes are the most "actionable" — high rating with low total time?
 
 # Get the Data from TidyTuesday
+tuesdata <- tidytuesdayR::tt_load(2025, week = 37)
+cuisines <- tuesdata$cuisines
 
-# Read in with tidytuesdayR package 
-# Install from CRAN via: install.packages("tidytuesdayR")
-# This loads the readme and all the datasets for the week of interest
+skim(cuisines)
 
-# Either ISO-8601 date or year/week works!
+missing_tbl <- tibble(
+  column = names(cuisines),
+  missing = sapply(cuisines, function(x) sum(is.na(x))),
+  pct_missing = sapply(cuisines, function(x) mean(is.na(x)) * 100)
+) %>%
+  arrange(desc(pct_missing))
 
-tuesdata <- tidytuesdayR::tt_load('2022-05-17')
-tuesdata <- tidytuesdayR::tt_load(2022, week = 20)
+print(missing_tbl)
 
-eurovision <- tuesdata$eurovision
+# remove any rows with missing values in key columns (lose abou 200 rows (10% of data))
+clean_cuisines <- cuisines %>%
+  drop_na() 
 
+# distribution plots of numeric variables
+##############################################################
+numeric_vars <- clean_cuisines %>%
+  select(where(is.double))
 
-# Overview 
-# dims, names, structure
-dim(eurovision)
-colnames(eurovision)
-glimpse(eurovision)
-
-# skim for quick summary statistics
-skimr::skim(eurovision)
-
-# Drop undesired columns for analysis (urls, emojis, rank_ordinal (== rank)) 
-eurovision <- eurovision %>%
-  select(-c(event_url, artist_url, image_url, country_emoji, rank_ordinal ))
-
-# check missing values 
-eurovision %>% 
-  summarise(across(everything(), ~sum(is.na(.)))) %>%
-  tidyr::pivot_longer(everything(),
-                      names_to = "variable", 
-                      values_to = "n_missing")
-
-# check missing values by year
-eurovision %>%
-  group_by(year) %>%
-  summarise(
-    n_missing_total = sum(across(everything(), ~sum(is.na(.))))
-  ) %>%
-  arrange(desc(n_missing_total))
-
-# drop entries from year 2020 because event was cancelled due to COVID-19 pandemic
-eurovision <- eurovision %>%
-  filter(year != 2020)  
-
-
-# normalize section var: final == grand final, semi-final == second-semi-final (names changed over years)
-
-eurovision <- eurovision %>%
-  mutate(section = case_when(
-    section == "final" ~ "grand-final",
-    section == "semi-final" ~ "second-semi-final",
-    TRUE ~ section
-  ))
-
-
-# save cleaned data  
-# create data directory if it doesn't exist
-if (!dir.exists("data")) {
-  dir.create("data")
+plots <- list()
+for (col in names(numeric_vars)) {
+  p <- ggplot(clean_cuisines, aes_string(x = col)) +
+    geom_histogram(binwidth = 1, fill = "blue", color = "black", alpha = 0.7) +
+    labs(title = paste("Distribution of", col), x = col, y = "Frequency") +
+    theme_classic()
+  plots[[col]] <- p
 }
-write_csv(eurovision, "data/eurovision_cleaned.csv")
+
+# combine with patchwork: grid of 2 columns
+combo <- patchwork::wrap_plots(plots, ncol = 2)
+ggsave("figures/numeric_distributions_all.png", combo, width = 12, height = 8)
+
+
+# plots for categorical variables
+##############################################################
+categorical_vars <- clean_cuisines %>%
+  select(where(is.character)) |>
+  select(-c(name, url, ingredients))  
+
+
+plots <- list()
+for (col in names(categorical_vars)) {
+  p <- ggplot(clean_cuisines, aes_string(x = col)) +
+    geom_bar(fill = "orange", color = "black", alpha = 0.7) +
+    labs(title = paste("Distribution of", col), x = col, y = "Count") +
+    theme_classic() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  plots[[col]] <- p
+} 
+# combine with patchwork: grid of 2 columns
+combo <- patchwork::wrap_plots(plots, ncol = 2)
+ggsave("figures/categorical_distributions_all.png", combo, width = 12, height = 8)  
+
+
+
+# save cleaned data for analysis
+##############################################################
+write_csv(clean_cuisines, "data/clean_cuisines.csv")
