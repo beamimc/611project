@@ -2,7 +2,10 @@
 
 
 # default target: build cleaned data
-all: data/clean_cuisines.csv figures/categorical_distributions_all.png figures/numeric_distributions_all.png
+all: data/clean_cuisines.csv figures/categorical_distributions_all.png \
+	figures/numeric_distributions_all.png figures/author_success.png \
+	figures/top_authors_cuisines.png \
+# 	report.html
 
 clean:
 	rm -rf figures
@@ -21,6 +24,12 @@ data/clean_cuisines.csv figures/categorical_distributions_all.png figures/numeri
 	mkdir -p figures data
 	Rscript --vanilla --slave clean_data.r >/dev/null 2>&1 # hide stdout
 
-# # build EDA figures
-# figures/distribution_all.png: analysis.r data/clean_cuisines.csv
-# 	Rscript --vanilla --slave analysis.r >/dev/null # hide stdout
+# build analysis by author figures
+figures/author_success.png figures/top_authors_cuisines.png: author_analysis.r data/clean_cuisines.csv
+	Rscript --vanilla --slave author_analysis.r >/dev/null 2>&1 # hide stdout
+
+# # build final report
+# report.html: report.Rmd data/clean_cuisines.csv figures/categorical_distributions_all.png \
+# 	figures/numeric_distributions_all.png figures/author_success.png \
+# 	figures/top_authors_cuisines.png
+# 	Rscript -e "rmarkdown::render('report.Rmd', output_file = 'report.html')" >/dev/null 2>&1 # hide stdout
