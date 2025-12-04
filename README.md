@@ -80,31 +80,6 @@ Targets created by the pipeline:
 - author figures: `figures/author_success.png`, `figures/top_authors_cuisines.png`, `figures/top_authors_total_time.png`, `figures/top_authors_calories.png`
 - `report.html` (rendered from `report.rmd`)
 
----
-
-## Pipeline / Makefile
-
-The project uses a Makefile to run the pipeline and render the report.
-
-- Run the full pipeline and render the report:
-```bash
-make
-```
-
-- Rebuild outputs from scratch:
-```bash
-make clean
-make
-```
-
-Targets created by the pipeline:
-- `data/clean_cuisines.csv`
-- `figures/categorical_distributions_all.png`
-- `figures/numeric_distributions_all.png`
-- `figures/country_distribution.png`
-- author figures: `figures/author_success.png`, `figures/top_authors_cuisines.png`, `figures/top_authors_total_time.png`, `figures/top_authors_calories.png`
-- `report.html` (rendered from `report.rmd`)
-
 Note: Make uses timestamps. If a file is newer than its prerequisites it will be considered up-to-date.
 
 ---
