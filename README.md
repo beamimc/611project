@@ -18,7 +18,7 @@ A description of the dataset can be found [here](https://github.com/rfordatascie
 - `.gitignore`           — ignores `figures/`, .DS_Store and .dockerignore
 ---
 
-## Quick start (development)
+## Installation & Usage
 
 Requirements: Docker (if using container) and R (if running locally).
 
